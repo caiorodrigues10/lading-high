@@ -17,4 +17,5 @@ export interface IUserLogin {
   name: string;
   email: string;
   tagPermission: string;
+  id: string;
 }

@@ -1,7 +1,12 @@
 import api from "@/services/api";
 import { AppResponse } from "@/services/types";
 import { getCookie } from "@/utils/cookie";
-import { ICreateUser, IEditUser, ISendEmailForgotPassword } from "../types";
+import {
+  ICreateUser,
+  IEditUser,
+  IEditUserResponse,
+  ISendEmailForgotPassword,
+} from "../types";
 
 async function forgotPassword(
   data: ISendEmailForgotPassword
@@ -33,8 +38,12 @@ async function createUser(data: ICreateUser): Promise<AppResponse> {
   return response;
 }
 
-async function editUser(data: IEditUser, id: string): Promise<AppResponse> {
-  const token = getCookie("high.token");
+async function editUser(
+  data: IEditUser,
+  id: string
+): Promise<IEditUserResponse> {
+  const token = getCookie("landing.token");
+
   const response = await fetch(`${api}/users/${id}`, {
     method: "PUT",
     headers: {
@@ -50,7 +59,7 @@ async function editUser(data: IEditUser, id: string): Promise<AppResponse> {
 }
 
 async function inactiveUser(id: string): Promise<AppResponse> {
-  const token = getCookie("high.token");
+  const token = getCookie("landing.token");
   const response = await fetch(`${api}/users/${id}`, {
     method: "DELETE",
     headers: {
@@ -65,7 +74,7 @@ async function inactiveUser(id: string): Promise<AppResponse> {
 }
 
 async function reactiveUser(id: string): Promise<AppResponse> {
-  const token = getCookie("high.token");
+  const token = getCookie("landing.token");
   const response = await fetch(`${api}/users/reactive/${id}`, {
     method: "POST",
     headers: {

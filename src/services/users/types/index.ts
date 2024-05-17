@@ -1,3 +1,5 @@
+import { AppResponse } from "@/services/types";
+
 interface ISendEmailForgotPassword {
   email: string;
 }
@@ -10,11 +12,12 @@ interface ICreateUser {
 }
 
 interface IEditUser {
-  email: string;
-  name: string;
+  email?: string;
+  name?: string;
   password?: string;
   confirmPass?: string;
-  userPermissionsId: string;
+  userPermissionsId?: string;
+  oldPassword?: string;
 }
 
 interface IVerifyTokenForgotPassword {
@@ -41,6 +44,10 @@ interface IListUserResponse {
   count: number;
 }
 
+interface IEditUserResponse extends AppResponse {
+  data: IUser;
+}
+
 export type {
   ISendEmailForgotPassword,
   ICreateUser,
@@ -49,4 +56,5 @@ export type {
   IVerifyTokenForgotPassword,
   IPermissions,
   IEditUser,
+  IEditUserResponse,
 };

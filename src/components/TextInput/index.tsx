@@ -11,7 +11,7 @@ export function TextInput({ ...rest }: InputProps) {
     inputWrapper: [
       "shadow-xl",
       "!bg-zinc-800",
-      "hover:!bg-zinc-800/60",
+      "hover:!bg-zinc-800",
       "focus-within:!bg-zinc-800",
       "!cursor-text",
     ],

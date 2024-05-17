@@ -20,10 +20,12 @@ import { Controller, useForm } from "react-hook-form";
 import { IoMdEye, IoMdEyeOff, IoMdLock, IoMdMail } from "react-icons/io";
 import { RecoveryPassword } from "./RecoveryPassword";
 import * as y from "yup";
+import { useRouter } from "next/navigation";
 
 interface ILoginProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenSingUp: () => void;
 }
 
 const loginSchema = y.object().shape({
@@ -33,8 +35,10 @@ const loginSchema = y.object().shape({
 
 type ILoginSchema = y.InferType<typeof loginSchema>;
 
-export function Login({ isOpen, onClose }: ILoginProps) {
+export function Login({ isOpen, onClose, onOpenSingUp }: ILoginProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [stayLogged, setStayLogged] = useState(true);
+  const { refresh } = useRouter();
   const { toast } = useToast();
   const {
     handleSubmit,
@@ -51,6 +55,7 @@ export function Login({ isOpen, onClose }: ILoginProps) {
   const submit = useCallback(
     async (data: ILogin) => {
       setIsLoading(true);
+      const days = stayLogged ? 30 : 1;
 
       const response = await login(data);
 
@@ -61,30 +66,38 @@ export function Login({ isOpen, onClose }: ILoginProps) {
           className: "toast-success",
         });
         addCookie({
-          expirationDays: 1,
-          name: "high.token",
+          expirationDays: days,
+          name: "landing.token",
           value: response.data.token,
         });
         addCookie({
-          expirationDays: 1,
-          name: "high.name",
+          expirationDays: days,
+          name: "landing.name",
           value: response.data.user.name,
         });
         addCookie({
-          expirationDays: 1,
-          name: "high.accessLevel",
+          expirationDays: days,
+          name: "landing.accessLevel",
           value: response.data.user.tagPermission,
         });
         addCookie({
-          expirationDays: 1,
-          name: "high.email",
+          expirationDays: days,
+          name: "landing.email",
           value: response.data.user.email,
         });
         addCookie({
-          expirationDays: 30,
-          name: "high.refreshToken",
+          expirationDays: days,
+          name: "landing.refreshToken",
           value: response.data.refreshToken,
         });
+        addCookie({
+          expirationDays: days,
+          name: "landing.id",
+          value: response.data.user.id,
+        });
+        refresh();
+        await fetch("/api/revalidate/");
+        onClose();
       } else {
         toast({
           description: response?.message || "Tente novamente mais tarde!",
@@ -94,7 +107,7 @@ export function Login({ isOpen, onClose }: ILoginProps) {
       }
       setIsLoading(false);
     },
-    [toast]
+    [toast, stayLogged, refresh, onClose]
   );
 
   return (
@@ -132,7 +145,6 @@ export function Login({ isOpen, onClose }: ILoginProps) {
                   {...field}
                   type={isVisible ? "text" : "password"}
                   label="Senha"
-                  id="inputTest"
                   labelPlacement="outside"
                   size="lg"
                   placeholder="Digite sua senha"
@@ -160,6 +172,8 @@ export function Login({ isOpen, onClose }: ILoginProps) {
             <div className="flex w-full justify-between">
               <Checkbox
                 defaultSelected
+                value={"true"}
+                onChange={(e) => setStayLogged(!!e.target.value)}
                 color="success"
                 size="sm"
                 classNames={{
@@ -184,9 +198,16 @@ export function Login({ isOpen, onClose }: ILoginProps) {
             </EspecialButton>
             <p className="text-center w-full py-3 text-sm text-zinc-300">
               Não possuí conta ainda?{" "}
-              <a className="hover:text-sky-500 hover:underline duration-200 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenSingUp();
+                  onClose();
+                }}
+                className="hover:text-sky-500 hover:underline duration-200 cursor-pointer"
+              >
                 Cadastrar-se
-              </a>
+              </button>
             </p>
           </ModalFooter>
         </form>

@@ -5,9 +5,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { useTimerContext } from "@/context/TimerContext";
 import { forgotPassword } from "@/services/users/client";
 import { ISendEmailForgotPassword } from "@/services/users/types";
+import { isValidEmail } from "@/utils/validEmail";
 import { yupResolver } from "@hookform/resolvers/yup";
 import {
-  Button,
   Link,
   Modal,
   ModalBody,
@@ -33,18 +33,24 @@ export function RecoveryPassword() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isLoading, setIsLoading] = useState(false);
   const { formatTime, startCounter, isRunning } = useTimerContext();
-  const {
-    handleSubmit,
-    control,
-    reset,
-    getValues,
-    formState: { errors },
-  } = useForm<IForgotPassword>({
+  const [errorEmail, setErrorEmail] = useState<null | string>(null);
+
+  const { handleSubmit, control, reset, getValues } = useForm<IForgotPassword>({
     resolver: yupResolver(forgotPasswordSchema),
   });
 
   const submit = useCallback(
     async (data: ISendEmailForgotPassword) => {
+      if (!data?.email) {
+        setErrorEmail("E-mail é obrigatório");
+        return;
+      } else if (!isValidEmail(data.email)) {
+        setErrorEmail("E-mail inválido");
+        return;
+      } else {
+        setErrorEmail(null);
+      }
+
       setIsLoading(true);
       const response = await forgotPassword(data);
 
@@ -70,7 +76,7 @@ export function RecoveryPassword() {
   return (
     <>
       <Link
-        className="hover:text-sky-500 text-xs hover:underline cursor-pointer text-zinc-300"
+        className="hover:text-sky-500 text-sm hover:underline cursor-pointer text-zinc-300"
         onClick={onOpen}
       >
         Esqueceu sua senha?
@@ -101,8 +107,8 @@ export function RecoveryPassword() {
                     size="lg"
                     className={clsx({ "w-10/12": isRunning })}
                     placeholder="Digite seu email"
-                    isInvalid={!!errors.email}
-                    errorMessage={errors.email?.message}
+                    isInvalid={!!errorEmail}
+                    errorMessage={errorEmail}
                     startContent={
                       <IoMdMail className="text-white/60" size={18} />
                     }

@@ -45,6 +45,7 @@ export default function HomePage() {
             width={550.68}
             height={1000}
             className="max-lg:w-[350px] max-sm:hidden"
+            priority
           />
         </div>
       </div>
@@ -59,7 +60,7 @@ export default function HomePage() {
               src={"/images/yasuo.svg"}
               width={400}
               height={1000}
-              className="max-lg:w-[350px] max-sm:hidden"
+              className="max-lg:w-[350px] max-sm:hidden w-auto h-auto"
             />
             <h1 className="uppercase text-5xl font-bold text-spring-green-500 text-right max-lg:text-3xl max-sm:mb-6 max-sm:text-center">
               Nossos serviços
@@ -150,7 +151,7 @@ export default function HomePage() {
               src={"/images/tresh.svg"}
               width={400}
               height={1000}
-              className="max-lg:w-[300px] max-sm:hidden"
+              className="max-lg:w-[300px] max-sm:hidden w-auto h-auto"
             />
           </div>
           <div className="flex justify-between w-full gap-12 max-lg:flex-col max-lg:items-center">
