@@ -34,6 +34,8 @@ export default function NavBar() {
   const userId = getCookie("landing.id");
   const pathname = usePathname();
 
+  const [showActiveAccount, setShowActiveAccount] = useState(false);
+
   const {
     onClose: onCloseSingUp,
     isOpen: isOpenSingUp,
@@ -267,10 +269,14 @@ export default function NavBar() {
         isOpen={isOpenLogin}
         onClose={onCloseLogin}
         onOpenSingUp={onOpenSingUp}
+        setShowActiveAccount={setShowActiveAccount}
       />
       <TimerProvider>
         <SingUp
+          setShowActiveAccount={setShowActiveAccount}
+          showActiveAccount={showActiveAccount}
           isOpen={isOpenSingUp}
+          onOpen={onOpenSingUp}
           onClose={onCloseSingUp}
           onOpenLogin={onOpenLogin}
         />

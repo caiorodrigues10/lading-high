@@ -7,6 +7,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { useToast } from "@/components/ui/use-toast";
+import { useAppContext } from "@/context/AppContext";
 import { useTimerContext } from "@/context/TimerContext";
 import { confirmCode, createUser, resendCode } from "@/services/users/client";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -20,7 +21,7 @@ import {
 } from "@nextui-org/react";
 import { User2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { IoMdEye, IoMdEyeOff, IoMdLock, IoMdMail } from "react-icons/io";
 import { InferType, object, string } from "yup";
@@ -38,23 +39,30 @@ export function SingUp({
   isOpen,
   onClose,
   onOpenLogin,
+  showActiveAccount,
+  onOpen,
+  setShowActiveAccount,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onOpenLogin: () => void;
+  showActiveAccount: boolean;
+  onOpen: () => void;
+  setShowActiveAccount: (val: boolean) => void;
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isVisibleConfirm, setIsVisibleConfirm] = useState(false);
   const { formatTime, startCounter, isRunning } = useTimerContext();
+  const { setEmailLogin, emailLogin, emailSingUp, setEmailSingUp } =
+    useAppContext();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
-  const { push } = useRouter();
+  const { refresh } = useRouter();
   const {
     handleSubmit,
     control,
     formState: { errors },
-    getValues,
     reset,
   } = useForm<ICreateUser>({
     resolver: yupResolver(createUserSchema),
@@ -85,6 +93,7 @@ export function SingUp({
         });
         startCounter();
         setIsCreated(true);
+        setEmailSingUp(data.email);
       } else {
         toast({
           description: response?.message || "Tente novamente mais tarde!",
@@ -94,7 +103,7 @@ export function SingUp({
       }
       setIsLoading(false);
     },
-    [startCounter, toast]
+    [startCounter, toast, setEmailSingUp]
   );
 
   const submitConfirmCode = useCallback(
@@ -103,7 +112,7 @@ export function SingUp({
 
       const response = await confirmCode({
         code: Number(code),
-        email: getValues("email"),
+        email: emailSingUp || emailLogin,
       });
 
       if (response && response.result === "success") {
@@ -112,8 +121,9 @@ export function SingUp({
           title: "Sucesso!",
           className: "toast-success",
         });
-        push("/dashboard");
-        setIsCreated(true);
+        refresh();
+        setIsCreated(false);
+        onClose();
       } else {
         toast({
           description: response?.message || "Tente novamente mais tarde!",
@@ -123,11 +133,11 @@ export function SingUp({
       }
       setIsLoading(false);
     },
-    [getValues, push, toast]
+    [refresh, toast, onClose, emailSingUp, emailLogin]
   );
 
   const submitResendCode = useCallback(async () => {
-    const response = await resendCode({ email: getValues("email") });
+    const response = await resendCode({ email: emailSingUp || emailLogin });
 
     if (response && response.result === "success") {
       toast({
@@ -143,7 +153,14 @@ export function SingUp({
         title: "Erro!",
       });
     }
-  }, [getValues, startCounter, toast]);
+  }, [startCounter, toast, emailSingUp, emailLogin]);
+
+  useEffect(() => {
+    if (!isRunning && showActiveAccount && emailLogin) {
+      startCounter();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showActiveAccount, isRunning, emailLogin]);
 
   return (
     <Modal
@@ -152,15 +169,17 @@ export function SingUp({
       onClose={() => {
         onClose();
         reset();
+        setShowActiveAccount(false);
+        setEmailLogin("");
       }}
       size="xl"
     >
       <ModalContent>
         <ModalHeader className="flex justify-center text-3xl">
-          {!isCreated ? "Cadastro" : "Confirmar código"}
+          {!isCreated && !showActiveAccount ? "Cadastro" : "Confirmar código"}
         </ModalHeader>
 
-        {isCreated ? (
+        {(isCreated || showActiveAccount) && (
           <form onSubmit={handleSubmitConfirmCode(submitConfirmCode)}>
             <ModalBody className="gap-4 w-full overflow-hidden flex justify-center pt-8 pb-4">
               <div className="flex flex-col gap-4">
@@ -201,7 +220,8 @@ export function SingUp({
               </EspecialButton>
             </ModalFooter>
           </form>
-        ) : (
+        )}
+        {!isCreated && !showActiveAccount && (
           <form onSubmit={handleSubmit(submit)}>
             <ModalBody className="gap-4">
               <Controller

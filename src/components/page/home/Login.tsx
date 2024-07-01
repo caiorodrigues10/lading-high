@@ -21,11 +21,13 @@ import { IoMdEye, IoMdEyeOff, IoMdLock, IoMdMail } from "react-icons/io";
 import { RecoveryPassword } from "./RecoveryPassword";
 import * as y from "yup";
 import { useRouter } from "next/navigation";
+import { useAppContext } from "@/context/AppContext";
 
 interface ILoginProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenSingUp: () => void;
+  setShowActiveAccount: (val: boolean) => void;
 }
 
 const loginSchema = y.object().shape({
@@ -35,15 +37,22 @@ const loginSchema = y.object().shape({
 
 type ILoginSchema = y.InferType<typeof loginSchema>;
 
-export function Login({ isOpen, onClose, onOpenSingUp }: ILoginProps) {
+export function Login({
+  isOpen,
+  onClose,
+  onOpenSingUp,
+  setShowActiveAccount,
+}: ILoginProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [stayLogged, setStayLogged] = useState(true);
   const { refresh } = useRouter();
+  const { setEmailLogin } = useAppContext();
   const { toast } = useToast();
   const {
     handleSubmit,
     control,
     formState: { errors },
+    reset,
   } = useForm<ILoginSchema>({
     resolver: yupResolver(loginSchema),
   });
@@ -96,9 +105,13 @@ export function Login({ isOpen, onClose, onOpenSingUp }: ILoginProps) {
           value: response.data.user.id,
         });
         refresh();
-        await fetch("/api/revalidate/");
         onClose();
       } else {
+        if (response?.result === "info") {
+          setShowActiveAccount(true);
+          onOpenSingUp();
+          setEmailLogin(data.email);
+        }
         toast({
           description: response?.message || "Tente novamente mais tarde!",
           variant: "destructive",
@@ -107,11 +120,27 @@ export function Login({ isOpen, onClose, onOpenSingUp }: ILoginProps) {
       }
       setIsLoading(false);
     },
-    [toast, stayLogged, refresh, onClose]
+    [
+      toast,
+      stayLogged,
+      refresh,
+      onClose,
+      setShowActiveAccount,
+      onOpenSingUp,
+      setEmailLogin,
+    ]
   );
 
   return (
-    <Modal backdrop="blur" isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal
+      backdrop="blur"
+      isOpen={isOpen}
+      onClose={() => {
+        reset();
+        onClose();
+      }}
+      size="xl"
+    >
       <ModalContent>
         <ModalHeader className="flex justify-center text-3xl">
           Login
@@ -203,6 +232,7 @@ export function Login({ isOpen, onClose, onOpenSingUp }: ILoginProps) {
                 onClick={() => {
                   onOpenSingUp();
                   onClose();
+                  reset();
                 }}
                 className="hover:text-sky-500 hover:underline duration-200 cursor-pointer"
               >
